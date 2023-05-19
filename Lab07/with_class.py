@@ -22,7 +22,6 @@ def load_iris_binary():
     L[L==2] = 0 # We assign label 0 to virginica (was label 2)
     return D, L
 
-
 class logRegClass():
 
     def __init__(self, D, L, l):

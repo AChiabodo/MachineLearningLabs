@@ -1,5 +1,7 @@
 import numpy
 import util
+from util import logpdf_GAU_ND
+from Classifiers import logMVG , linearMVG , logTiedMVG , logNaiveMVG
 from scipy.stats import multivariate_normal
 
 def readfile():
@@ -13,7 +15,7 @@ def readfile():
     with open('data/Train.csv') as f:
         for line in f:
             try:
-                attrs = line.split(',')[0:4]
+                attrs = line.split(',')[0:10]
                 attrs = util.vcol(numpy.array([float(i) for i in attrs]))
                 name = line.split(',')[-1].strip()
                 label = hLabels[name]
@@ -24,18 +26,7 @@ def readfile():
         D , L = numpy.hstack(DList), numpy.array(labelsList, dtype=numpy.int32)
         return D, L
 
-def logpdf_GAU_ND(X, mu, C):
-    _, log_determinant = numpy.linalg.slogdet(C)
-    firstTerm = - (numpy.shape(X)[0] * 0.5) * numpy.log(2 * numpy.pi) - log_determinant * 0.5
-    L = numpy.linalg.inv(C)
-    XC = X - mu
-    return firstTerm - 0.5 * (XC * numpy.dot(L,XC)).sum(0)
-
-if __name__ == '__main__':
-
-    # Load the dataset
-    D, L = readfile()
-
+def __olds():
     # Compute the mean and covariance for each class
     means = []
     covs = []
@@ -53,7 +44,26 @@ if __name__ == '__main__':
 
     # Predict the class with the highest log-likelihood
     y_pred = numpy.argmax(log_likelihoods, axis=0)
-
     # Compute the accuracy
     accuracy = numpy.mean(y_pred == L)
-    print('Accuracy:', accuracy)
+
+if __name__ == '__main__':
+
+    # Load the dataset
+    D, L = readfile()
+    (DTR, LTR), (DTE, LTE) = util.split_db_2to1(D, L)
+
+    _, P = logMVG(DTR, LTR, DTE)
+    SPost = P.argmax(axis=0)
+    error = (SPost - LTE).sum() / LTE.shape[0] * 100
+    print(error)
+
+    _, P = logNaiveMVG(DTR, LTR, DTE)
+    SPost = P.argmax(axis=0)
+    error = (SPost - LTE).sum() / LTE.shape[0] * 100
+    print(error)
+
+    _, P = logTiedMVG(DTR, LTR, DTE)
+    SPost = P.argmax(axis=0)
+    error = (SPost - LTE).sum() / LTE.shape[0] * 100
+    print(error)
