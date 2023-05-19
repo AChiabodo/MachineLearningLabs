@@ -1,37 +1,7 @@
-#try to find the minimizer of a function
 import numpy
-import numpy as np
 import scipy
 import sklearn.datasets
-
-def vcol(v) -> numpy.array:
-    return v.reshape((v.size, 1))
-
-def vrow(v) -> numpy.array:
-    return v.reshape((1, v.size))
-
-def f ( x: np.array) :
-    y = x[0]
-    z = x[1]
-    return (y+3)**2 + np.sin(y) + (z+1)**2
-
-def explicit_gradient(x: np.array ) :
-    y = x[0]
-    z = x[1]
-    return numpy.array([ (2*y + 6 + np.cos(y)) , (2*z + 2)])
-
-def try_minimizer() :
-    x = np.array([0, 17])
-    estmin, objmin, info = scipy.optimize.fmin_l_bfgs_b(f, x, approx_grad=True, iprint=1)
-    print(estmin)
-    print(objmin)
-    print(info)
-    print("---------------------------------------------------------------------------------------")
-    estmin, objmin, info = scipy.optimize.fmin_l_bfgs_b(f, x, explicit_gradient, iprint=1)
-    print(estmin)
-    print(objmin)
-    print(info)
-
+import util
 
 def split_db_2to1(D, L, seed=0):
     nTrain = int(D.shape[1] * 2.0 / 3.0)
@@ -52,45 +22,47 @@ def load_iris_binary():
     L[L==2] = 0 # We assign label 0 to virginica (was label 2)
     return D, L
 
+class logRegClass():
+    def __init__(self, DTR, LTR, l=1e-3):
+        self.DTR = DTR
+        self.ZTR = LTR * 2.0 - 1
+        self.l = l
+        self.dim = DTR.shape[0]
 
-def logreg_obj( v : np.array, lambda_v : float , DTR :np.array , LTR : np.array) :
-    w = vcol(v[ 0 : -1])
-    b = v[ -1 ]
-    regolarization_term = lambda_v / 2 * (np.dot(w.T,w))
-    logistic_loss = 0
-    for i in range(DTR.shape[1]) :
-        zi_si = (2*LTR[i]-1) * ((numpy.dot(w.T, vcol(DTR[:, i])) + b ))
-        logistic_loss += np.logaddexp( 0,- zi_si)
+    def logreg_obj(self, v):
+        # Compute and return the objective function value. You can retrieve all required information from self.DTR, self.LTR, self.l
+        w = util.vcol(v[0: self.dim])
+        b = v[-1]
+        scores = numpy.dot(w.T, self.DTR) + b
+        loss_per_sample = numpy.logaddexp(0 , -self.ZTR * scores)
+        loss = 0.5 * self.l * numpy.linalg.norm(w)**2 + loss_per_sample.mean()
+        return loss
 
-    return regolarization_term + logistic_loss / DTR.shape[1]
+    def train(self):
+        x0 = numpy.zeros(self.DTR.shape[0]+1)
+        xOpt , fOpt , d = scipy.optimize.fmin_l_bfgs_b(self.logreg_obj,x0=x0,approx_grad=True)
+        w , b = util.vcol(xOpt[0:self.DTR.shape[0]]) , xOpt[-1]
+        return w , b
 
-def min_logregr_loss(DTE,LTE,v) :
-    accuracy = 0
-    LP = []
-    for i in range(DTE.shape[1]):
-        score = np.dot(vrow(v[0:4]), vcol(DTE[:, i])) + v[4]
-        if score > 0:
-            LP.append(1)
-        else:
-            LP.append(0)
+    def evaluate(self,DTE,LTE):
+        w, b = self.train()
+        Score = numpy.dot(w.T, DTE) + b
+        PLabel = (Score > 0).astype(int)
+        Error = ((LTE != PLabel).astype(int).sum() / DTE.shape[1]) * 100
+        return Error , w, b
 
-        if LP[i] == LTE[i]:
-            accuracy += 1
-
-    print("Accuracy")
-    print(accuracy / DTE.shape[1])
-    print(" Error ")
-    print((DTE.shape[1] - accuracy) / DTE.shape[1])
+def BinaryLogRegression(DTR, LTR, DTE, LTE):
+    minRate = 100
+    w_best, b_best = (0, 0)
+    for lam in [1, 0.1, 1e-3, 1e-6]:
+        Error, w, b = logRegClass(DTR, LTR, lam).evaluate(DTE, LTE)
+        print(Error)
+        if Error < minRate:
+            minRate = Error
+            w_best, b_best = w, b
+    return minRate , w_best, b_best
 
 if __name__ == '__main__':
-    try_minimizer()
     D, L = load_iris_binary()
     (DTR, LTR), (DTE, LTE) = split_db_2to1(D, L)
-    lambda_v = 1
-    x0 = np.zeros(DTR.shape[0] + 1)
-    estmin, objmin, info = scipy.optimize.fmin_l_bfgs_b(logreg_obj, x0, args=(lambda_v, DTR, LTR), approx_grad=True,
-                                                        iprint=1)
-    print(estmin)
-    print(objmin)
-    print(info)
-    min_logregr_loss(DTE, LTE, estmin)
+    _ , w , b = BinaryLogRegression(DTR, LTR, DTE, LTE)
