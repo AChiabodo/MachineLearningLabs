@@ -47,3 +47,4 @@ if __name__ == '__main__':
 
     error, w, b = logRegClass(DTR, LTR, 1).evaluate(DTE, LTE)
     print(error)
+    print(logRegClass(DTR, LTR, 1).confusion_matrix(DTE, LTE))

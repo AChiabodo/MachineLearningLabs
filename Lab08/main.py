@@ -24,8 +24,6 @@ def split_db_2to1(D, L, seed=0):
     LTE = L[idxTest]        #Label Test
     return (DTR, LTR), (DTE, LTE)
 
-
-
 def split_in_k(D,L,k, seed=0):
     #we want to mantain the K (#of models / groups) as large as possible to emulate the "leave-one-out"
     #for IRIS is ok to implement the leave-one-out
@@ -49,42 +47,13 @@ def confusion_matrix(LTE,SPost):
             matrix[i][j] = (SPost[LTE == j] == i).sum()
     return matrix
 
-def Classificator_iris():
-    D, L = load_iris()
-    (DTR, LTR), (DTE, LTE) = split_db_2to1(D, L)
-
-    _, P = linearMVG(DTR, LTR, DTE)
-    # test = numpy.load('solution/SJoint_MVG.npy')
-    SPost = P.argmax(axis=0)
-    error = (SPost - LTE).sum() / LTE.shape[0] * 100
-
-    confusion_matrix(LTE, SPost)
-
-    _, P = logMVG(DTR, LTR, DTE)
-    SPost = P.argmax(axis=0)
-    error = (SPost - LTE).sum() / LTE.shape[0] * 100
-
-    confusion_matrix(LTE, SPost)
-
-    _, P = logNaiveMVG(DTR, LTR, DTE)
-    SPost = P.argmax(axis=0)
-    error = (SPost - LTE).sum() / LTE.shape[0] * 100
-
-    confusion_matrix(LTE,SPost)
-
-    _, P = logTiedMVG(DTR, LTR, DTE)
-    SPost = P.argmax(axis=0)
-    error = (SPost - LTE).sum() / LTE.shape[0] * 100
-
-    confusion_matrix(LTE,SPost)
-
 def Discriminant_ratio(threshold,SPost):
     res = numpy.copy(SPost)
     res[SPost > threshold] = 1
     res[SPost <= threshold] = 0
     return (SPost > threshold).astype(int)
 
-def optimal_decisions(WorkPoint, LTE=None, SPost=None):
+def optimal_decisions(WorkPoint):
     """
 
     :param WorkPoint:
@@ -113,7 +82,6 @@ def optimal_decisions(WorkPoint, LTE=None, SPost=None):
         if(tempDCF < MinDCF):
             MinDCF = tempDCF
     print(f" Min : {MinDCF}")
-
 
 if __name__ == '__main__':
     #LTE = numpy.load('Data/commedia_labels.npy')

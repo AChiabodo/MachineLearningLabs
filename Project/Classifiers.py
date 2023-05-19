@@ -120,3 +120,9 @@ class logRegClass():
         PLabel = (Score > 0).astype(int)
         Error = ((LTE != PLabel).astype(int).sum() / DTE.shape[1]) * 100
         return Error , w, b
+
+    def confusion_matrix(self,DTE,LTE):
+        w, b = self.train()
+        Score = numpy.dot(w.T, DTE) + b
+        PLabel = (Score > 0).astype(int)
+        return util.confusion_matrix(LTE,PLabel)

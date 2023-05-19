@@ -49,3 +49,11 @@ def split_db_2to1(D, L, seed=0):
     LTR = L[idxTrain]       #Label Training
     LTE = L[idxTest]        #Label Test
     return (DTR, LTR), (DTE, LTE)
+
+def confusion_matrix(LTE,SPost):
+    n = numpy.unique(LTE).shape[0]
+    matrix = numpy.zeros([n,n])
+    for i in numpy.unique(LTE):
+        for j in numpy.unique(LTE):
+            matrix[i][j] = (SPost.flat[ LTE == j] == i).sum()
+    return matrix
