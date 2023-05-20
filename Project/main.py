@@ -1,6 +1,7 @@
 import numpy
 import util
-from Classifiers import logMVG , linearMVG , logTiedMVG , logNaiveMVG , logRegClass
+from Classifier import logMVG , linearMVG , logTiedMVG , logNaiveMVG
+from Project.Classifiers.LogisticRegression import LogRegClass
 
 def readfile(file):
     DList = []
@@ -32,19 +33,21 @@ if __name__ == '__main__':
 
     _, P = logMVG(DTR, LTR, DTE)
     SPost = P.argmax(axis=0)
-    error = (SPost - LTE).sum() / LTE.shape[0] * 100
+    error = (SPost != LTE).sum() / LTE.shape[0] * 100
     print(error)
 
     _, P = logNaiveMVG(DTR, LTR, DTE)
     SPost = P.argmax(axis=0)
-    error = (SPost - LTE).sum() / LTE.shape[0] * 100
+    error = (SPost != LTE).sum() / LTE.shape[0] * 100
     print(error)
 
     _, P = logTiedMVG(DTR, LTR, DTE)
     SPost = P.argmax(axis=0)
-    error = (SPost - LTE).sum() / LTE.shape[0] * 100
+    error = (SPost != LTE).sum() / LTE.shape[0] * 100
     print(error)
 
-    error, w, b = logRegClass(DTR, LTR, 1).evaluate(DTE, LTE)
+    error, w, b = LogRegClass(DTR, LTR, 0.00001).evaluate(DTE, LTE)
     print(error)
-    print(logRegClass(DTR, LTR, 1).confusion_matrix(DTE, LTE))
+    print(LogRegClass(DTR, LTR, 1).confusion_matrix(DTE, LTE))
+
+    util.k_folds(DTR,LTR,DTR.shape[0],logMVG)
