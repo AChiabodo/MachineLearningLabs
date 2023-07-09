@@ -1,3 +1,6 @@
+import math
+import time
+
 import numpy
 import scipy.special
 import sklearn.datasets
@@ -53,14 +56,14 @@ def Discriminant_ratio(threshold,SPost):
     res[SPost <= threshold] = 0
     return (SPost > threshold).astype(int)
 
-def optimal_decisions(WorkPoint):
+def optimal_decisions(workPoint):
     """
 
     :param WorkPoint:
     :param LTE:
     :param SPost:
     """
-    pi, C_fn, C_fp = WorkPoint
+    pi, C_fn, C_fp = workPoint
     LTE = numpy.load('Data/commedia_labels_infpar.npy')
     SPost = numpy.load('Data/commedia_llr_infpar.npy')
     threshold = -numpy.log( (pi*C_fn) / ( (1-pi) * C_fp ) )
@@ -83,12 +86,45 @@ def optimal_decisions(WorkPoint):
             MinDCF = tempDCF
     print(f" Min : {MinDCF}")
 
+    minDCF = compute_minDCF(LTE,SPost,WorkPoint(pi,C_fn,C_fp))
+    print(f" Min : {minDCF}")
+
+class WorkPoint:
+    def __init__(self, pi: float, C_fn: float, C_fp: float):
+        self.pi = pi
+        self.C_fn = C_fn
+        self.C_fp = C_fp
+
+    def effective_prior(self):
+        return (self.pi * self.C_fn) / (self.pi * self.C_fn + (1 - self.pi) * self.C_fp)
+
+
+def compute_minDCF(LTE,SPost,workPoint):
+    idx = numpy.argsort(SPost)
+    sortL = LTE[idx]
+    MinDCF = 1
+    startingMatrix = confusion_matrix(LTE, Discriminant_ratio(-math.inf, SPost))
+    for val in sortL:
+        if(val == 0):
+            startingMatrix[0][0] = startingMatrix[0][0] + 1
+            startingMatrix[1][0] = startingMatrix[1][0] - 1
+        else:
+            startingMatrix[0][1] = startingMatrix[0][1] + 1
+            startingMatrix[1][1] = startingMatrix[1][1] - 1
+        _, tempDCF = util.Compute_DCF(startingMatrix, workPoint.pi, workPoint.C_fn, workPoint.C_fp)
+        if (tempDCF < MinDCF):
+            MinDCF = tempDCF
+    return MinDCF
+
 if __name__ == '__main__':
     #LTE = numpy.load('Data/commedia_labels.npy')
     #SPost = numpy.load('Data/commedia_ll.npy').argmax(axis=0)
+    print("Confusion matrix with workpoint (0.5,1,1)")
+    optimal_decisions([0.5, 1, 1])
 
     #confusion_matrix(LTE,SPost)
 
+def temp():
     print("Confusion matrix with workpoint (0.5,1,1)")
     optimal_decisions([0.5, 1, 1])
 
