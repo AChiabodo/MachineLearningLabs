@@ -66,28 +66,41 @@ def optimal_decisions(workPoint):
     pi, C_fn, C_fp = workPoint
     LTE = numpy.load('Data/commedia_labels_infpar.npy')
     SPost = numpy.load('Data/commedia_llr_infpar.npy')
+    print(SPost.shape)
     threshold = -numpy.log( (pi*C_fn) / ( (1-pi) * C_fp ) )
 
     res = Discriminant_ratio(threshold,SPost)
 
-    matrix =  confusion_matrix(LTE,res)
+    matrix = confusion_matrix(LTE,res)
     #print(matrix) print(DCF) print(nDCF)
 
     DCF , nDCF = util.Compute_DCF(matrix, pi, C_fn, C_fp)
 
     MinDCF = 1
-    ROCPoints = []
+    FPRs = []
+    TPRs = []
     for val in numpy.sort(SPost):
         matrix = confusion_matrix(LTE, Discriminant_ratio(val, SPost))
+        FPR = matrix[1][0] / (matrix[0][0] + matrix[1][0])
         FNR = matrix[0][1] / (matrix[0][1] + matrix[1][1])
-        ROCPoints.append( FNR )
+        FPRs.append( FPR )
+        TPRs.append( 1 - FNR)
         _ , tempDCF = util.Compute_DCF(matrix, pi, C_fn, C_fp)
         if(tempDCF < MinDCF):
             MinDCF = tempDCF
     print(f" Min : {MinDCF}")
-
+    plot_roc_curve(FPRs, TPRs)
     minDCF = compute_minDCF(LTE,SPost,WorkPoint(pi,C_fn,C_fp))
     print(f" Min : {minDCF}")
+
+def plot_roc_curve(FPRs, TPRs):
+    plt.figure()
+    plt.ylim([0, 1])
+    plt.xlim([0, 1])
+    plt.plot(FPRs, TPRs)
+    plt.grid()
+    plt.show()
+
 
 class WorkPoint:
     def __init__(self, pi: float, C_fn: float, C_fp: float):

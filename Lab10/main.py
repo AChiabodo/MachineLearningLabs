@@ -1,6 +1,6 @@
 import numpy
 import math
-
+import util
 import scipy.special
 
 
@@ -18,7 +18,7 @@ def DUAL_LBFGS_KERNEL_SVM_NOBIA_Lambda(D,Y,C,pTar=None):
     nT = float((Y>0).sum())
 def Kfunc_rbf_fact2(g):
     def k(D1,D2):
-        DIST = mcol( (D1**2).sum(0) ) + mrow( (D2**2).sum(0) ) - 2* numpy.dor(D1.T , D2)
+        DIST = util.vcol( (D1**2).sum(0) ) + util.vrow( (D2**2).sum(0) ) - 2* numpy.dor(D1.T , D2)
         return ;
     def K(D1,D2):
         H = numpy.zeros((D1.shape[1],D1.shape[2]))

@@ -2,6 +2,15 @@
 import numpy as numpy
 import matplotlib.pyplot as plt
 import util
+import LDA
+
+def PCA(DTR,m):
+    C = util.dataCovarianceMatrix(DTR)
+    s, U = numpy.linalg.eigh(C)
+    P = U[:, ::-1][:, 0:m]
+    W = numpy.dot(P.T, DTR)
+    return W
+
 def readfile():
     DList = []
     labelsList = []
@@ -62,4 +71,6 @@ def plot_scatter(D, L , m):
         plt.show()
 
 if __name__ == '__main__':
-    readfile()
+    DTR , LTR = util.readfile_iris('./iris.csv')
+    W = PCA(DTR,4)
+    LDA.analize(W,LTR)
