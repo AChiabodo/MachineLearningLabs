@@ -3,6 +3,7 @@ import numpy as numpy
 import matplotlib.pyplot as plt
 import util
 import LDA
+from matplotlib.backends.backend_pdf import PdfPages
 
 def PCA(DTR,m):
     C = util.dataCovarianceMatrix(DTR)
@@ -70,7 +71,34 @@ def plot_scatter(D, L , m):
             #plt.savefig('scatter_%d_%d.pdf' % (dIdx1, dIdx2))
         plt.show()
 
+def plot_hists(DTR: numpy.array, LTR: numpy.array):
+    f0 = DTR[:, LTR == 0]
+    f1 = DTR[:, LTR == 1]
+    f2 = DTR[:, LTR == 2]
+
+    hFea = {
+        0: 'Sepal length',
+        1: 'Sepal width',
+        2: 'Petal length',
+        3: 'Petal width'
+    }
+
+    with PdfPages('target/hists.pdf') as pdf:
+        for i in range(DTR.shape[0]):
+            fig = plt.figure()
+            plt.xlabel(f"Feature: {i}")
+            plt.ylabel("Density")
+            plt.hist(f0[i, :], density=True, bins=20, label='Iris-setosa', alpha=0.4)
+            plt.hist(f1[i, :], density=True, bins=20, label='Iris-versicolor', alpha=0.4)
+            plt.hist(f2[i, :], density=True, bins=20, label='Iris-virginica', alpha=0.4)
+
+            plt.legend()
+            pdf.savefig(fig)
+            plt.close(fig)
+
+
 if __name__ == '__main__':
     DTR , LTR = util.readfile_iris('./iris.csv')
-    W = PCA(DTR,4)
-    LDA.analize(W,LTR)
+    W = PCA(DTR,1)
+    plot_hists(DTR,LTR)
+    plot_hists(W,LTR)
