@@ -1,16 +1,10 @@
-import math
-
 import matplotlib.pyplot as plt
 import numpy
 import util
 
-def vrow(v):
-    return v.reshape((1, v.size))
-
-
 def logpdf_GAU_ND(X, mu, C):
     _, log_determinant = numpy.linalg.slogdet(C)
-    firstTerm = - (numpy.shape(X)[0] * 0.5) * math.log(2 * math.pi) - log_determinant * 0.5
+    firstTerm = - (numpy.shape(X)[0] * 0.5) * numpy.log(2 * numpy.pi) - log_determinant * 0.5
     L = numpy.linalg.inv(C)
     XC = X - mu
     return firstTerm - 0.5 * (XC * numpy.dot(L, XC)).sum(0)
@@ -23,11 +17,11 @@ if __name__ == '__main__':
     XPlot = numpy.linspace(-8, 12, 1000)
     m = numpy.ones((1, 1)) * 1.0
     C = numpy.ones((1, 1)) * 2.0
-    plt.plot(XPlot.ravel(), numpy.exp(logpdf_GAU_ND(vrow(XPlot), m, C)))
+    plt.plot(XPlot.ravel(), numpy.exp(logpdf_GAU_ND(util.vrow(XPlot), m, C)))
     #plt.show()
 
     pdfSol = numpy.load('data/llGAU.npy')
-    pdfGau = logpdf_GAU_ND(vrow(XPlot), m, C)
+    pdfGau = logpdf_GAU_ND(util.vrow(XPlot), m, C)
     assert (numpy.abs(pdfSol - pdfGau).max() < 1e-10)
 
     XND = numpy.load('data/XND.npy')
@@ -53,7 +47,7 @@ if __name__ == '__main__':
     plt.figure()
     plt.hist(X1D.ravel(), bins=50, density=True)
     XPlot = numpy.linspace(-8, 12, 1000)
-    plt.plot(XPlot.ravel(), numpy.exp(logpdf_GAU_ND(vrow(XPlot), mu_ML - 0.1, C_ML)))
+    plt.plot(XPlot.ravel(), numpy.exp(logpdf_GAU_ND(util.vrow(XPlot), mu_ML - 0.1, C_ML)))
     plt.show()
 
     ## We can also verify that computing the log-likelihood for other values of μ and Σ would results in a lower value of the log-likelihood.

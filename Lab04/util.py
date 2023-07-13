@@ -3,30 +3,6 @@ import scipy
 import matplotlib.pyplot as pyplot
 import sklearn.datasets
 
-
-def readfile_iris(file):
-    DList = []
-    labelsList = []
-    hLabels = {
-        'Iris-setosa': 0,
-        'Iris-versicolor': 1,
-        'Iris-virginica' : 2
-    }
-
-    with open(file) as f:
-        for line in f:
-            try:
-                attrs = line.split(',')[0:4]
-                attrs = vcol(numpy.array([float(i) for i in attrs]))
-                name = line.split(',')[-1].strip()
-                label = hLabels[name]
-                DList.append(attrs)
-                labelsList.append(label)
-            except:
-                pass
-        D, L = numpy.hstack(DList), numpy.array(labelsList, dtype=numpy.int32)
-        return D, L
-
 def vcol(v):
     return v.reshape((v.size, 1))
 
@@ -78,13 +54,3 @@ def load_iris():
 def load_digits():
     D, L = sklearn.datasets.load_digits()['data'].T, sklearn.datasets.load_digits()['target']
     return D, L
-
-def analize(DTR,LDR):
-    setosa = DTR[(LDR == 0).reshape(150), 2]
-    versicolor = DTR[(LDR == 1).reshape(150), 2]
-    virginica = DTR[(LDR == 2).reshape(150), 2]
-    # pyplot.plot(numpy.arange(0,setosa.size),setosa)
-    pyplot.hist(setosa, bins=15, color='blue', label="setosa")
-    pyplot.hist(versicolor, bins=15, color='red')
-    pyplot.hist(virginica, bins=15, color='yellow')
-    pyplot.show()

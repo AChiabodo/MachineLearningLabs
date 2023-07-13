@@ -3,15 +3,6 @@ import scipy.special
 import sklearn.datasets
 import util
 
-def load_iris():
-    D, L = sklearn.datasets.load_iris()['data'].T, sklearn.datasets.load_iris()['target']
-    return D, L
-
-def load_digits():
-    D, L = sklearn.datasets.load_digits()['data'].T, sklearn.datasets.load_digits()['target']
-    #D, L = sklearn.datasets.load_iris()['data'].T, sklearn.datasets.load_iris()['target']
-    return D, L
-
 def split_db_2to1(D, L, seed=0):
     nTrain = int(D.shape[1]*2.0/3.0)
     numpy.random.seed(seed)
@@ -71,7 +62,7 @@ def logMVG(DTR, LTR, DTE):
 
 def logNaiveMVG(DTR, LTR, DTE):
     hCls = {}
-    for lab in [0, 1, 2]:
+    for lab in numpy.unique(LTR):
         DCLS = DTR[:, LTR == lab]
         C , mu = util.dataCovarianceMatrix(DCLS)
         ones = numpy.diag(numpy.ones(DCLS.shape[0]))
@@ -117,8 +108,11 @@ def logTiedMVG(DTR, LTR, DTE):
     return SJoint, P
 
 def Classificators():
-    D, L = load_iris()
+    D, L = util.load_iris()
     (DTR, LTR), (DTE, LTE) = split_db_2to1(D, L)
+
+    iD , iL = util.load_digits()
+    (iDTR, iLTR), (iDTE, iLTE) = split_db_2to1(iD, iL)
 
     _, P = linearMVG(DTR, LTR, DTE)
     # test = numpy.load('solution/SJoint_MVG.npy')
@@ -156,18 +150,39 @@ def split_in_k(D,L,k, seed=0):
         label_k_folds.append(L[idxSplit[i]])
     return k_folds , label_k_folds
 
+def split_in_k_balanced(D : numpy.array,L,k, seed=0):
+    Data = []
+    Labels = []
+    for i in numpy.unique(L):
+        idx = numpy.random.permutation(D[:,L==i].shape[1])
+        idxSplit = numpy.array_split(idx, k)
+        Data.append([])
+        Labels.append([])
+        for j in range(k):
+            Data[i].append(D[:,L==i][:, idxSplit[j]])
+            Labels[i].append(L[L==i][idxSplit[j]])
+    k_folds = []
+    label_k_folds = []
+    for i in range(k):
+        k_folds.append(numpy.hstack([Data[j][i] for j in numpy.unique(L)]))
+        label_k_folds.append(numpy.hstack([Labels[j][i] for j in numpy.unique(L)]))
+    return k_folds , label_k_folds
+
+
 if __name__ == '__main__':
     #Classificators()
-    D, L = load_iris()
+    D, L = util.load_iris()
+    #split_in_k_balanced(D,L,5)
     n = 1
-    k = D.shape[1]//n
+    #k = D.shape[1]//n
+    k = 2
     print(f" k = {k} and n = {n}")
     errors_MVG = 0
     errors_logMVG = 0
     errors_Naive = 0
     errors_Tied = 0
     groups , groups_labels = split_in_k(D,L,k)
-    for i in range(k):
+    for i in range(0,k):
         temp = groups[:i] + groups[i+1:]
         DTR = numpy.hstack(temp)
         temp = groups_labels[:i] + groups_labels[i+1:]
